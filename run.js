@@ -154,6 +154,11 @@ async function broadcastUpdate() {
     }
 }
 
+async function sendHelp(ctx) {
+    const helpText = `I can help you find vaccine appoinments near you.\n\nYou can control me by sending these commands:\n\n/subscribe - subscribe to hourly updates based on your zipcode and search range.\n/unsubscribe - unsubscribe hourly updates.\n/range - set the search reange. (e.g.  \`/range 200\` sets the max search range to 200 miles.)\n/zipcode - set where you want to find vaccine appoinments (e.g. \`/zipcode 94124\` makes me search available appointments near 94124)\n/help - see available commands\n\nWe are powered by VaccineSpotter API(www.vaccinespotter.org).`;
+    const userId = getUserId(ctx);
+    sendUpdate(userId, helpText);
+}
 
 bot.start(subscribeToUpdates);
 bot.command("subscribe", subscribeToUpdates);
@@ -161,6 +166,7 @@ bot.command("unsubscribe", unsubscribeUpdates);
 bot.command("range", setRange);
 bot.command("zipcode", setZipcode);
 bot.command("now", updateNow);
+bot.command("help", sendHelp);
 bot.launch();
 
 cron.schedule(config.FETCH_FREQUENCY, broadcastUpdate);

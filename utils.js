@@ -116,9 +116,9 @@ function filterAppointments(appointments, range, zipcode) {
             content += formatAppointment(i, appointment, zipcode)
         }
 
-        return `${availabeAppointments.length} appoinment(s) found within ${range} mi of ${zipcode}.\n----------\n${content}`;
+        return `\u{1F489} ${availabeAppointments.length} appoinment(s) found within ${range} mi of ${zipcode}.\n----------\n${content}`;
     } else {
-        return `no appointments available within ${range} mi of ${zipcode}.`
+        return `\u{1F97A} no appointments available within ${range} mi of ${zipcode}. Keep trying! Don't forget to wear a mask and social distance!.`
     }
 }
 

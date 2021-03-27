@@ -172,4 +172,3 @@ bot.command("help", sendHelp);
 bot.launch();
 
 cron.schedule(config.FETCH_FREQUENCY, broadcastUpdate);
-broadcastUpdate();

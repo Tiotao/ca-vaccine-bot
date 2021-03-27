@@ -5,6 +5,8 @@ const low = require("lowdb");
 const FileSync = require("lowdb/adapters/FileSync");
 const adapter = new FileSync(config.DB_PATH);
 const db = low(adapter);
+const express = require('express');
+const expressApp = express();
 
 const { encrypt, decrypt } = require('./crypto');
 const {
@@ -173,7 +175,13 @@ bot.command("help", sendHelp);
 
 if (config.ENV === "prod") {
     bot.telegram.setWebhook(config.WEBHOOK_URL);
-    bot.startWebhook(`/webhook`, null, config.WEBHOOK_PORT)
+    expressApp.use(bot.webhookCallback(`/webhook`));
+    expressApp.get('/', (req, res) => {
+        res.send('Hello World!');
+    });
+    expressApp.listen(config.WEBHOOK_PORT, () => {
+    console.log(`Server running on port ${config.WEBHOOK_PORT}`);
+    });
     cron.schedule(config.FETCH_FREQUENCY, broadcastUpdate);
 } else {
     bot.launch();

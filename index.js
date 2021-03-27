@@ -44,7 +44,8 @@ async function subscribeToUpdates(ctx) {
                 active: true,
             })
             .write();
-        ctx.replyWithMarkdown(`Subscribe successfully.`);
+        const subscriber = getSubscriber(db, userId);
+        ctx.replyWithMarkdown(`Subscribe successfully.\n${formatUserConfig(subscriber)});
     }
 }
 

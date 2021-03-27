@@ -50,9 +50,9 @@ function getSubscriber(db, userId) {
 }
 
 function formatUserConfig(user) {
-    const zipCode = decrypt(user.zipCode);
+    const zipCode = decrypt(user.zipcode);
     const range = decrypt(user.range);
-    return `Zipcode: ${zipCode}\nRange: ${range}`
+    return `Zipcode: ${zipCode}\nRange: ${range}`;
 }
 
 async function fetchAppointments() {

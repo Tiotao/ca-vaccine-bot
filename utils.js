@@ -128,5 +128,6 @@ module.exports = {
     getSubscriber,
     fetchAppointments,
     filterAppointments,
+    formatUserConfig,
     ZIPCODES
 };

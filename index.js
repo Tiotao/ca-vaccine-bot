@@ -14,6 +14,7 @@ const {
     getSubscriber,
     fetchAppointments,
     filterAppointments,
+    formatUserConfig,
     ZIPCODES
     } = require('./utils');
 

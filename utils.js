@@ -100,7 +100,6 @@ function filterAppointments(appointments, range, zipcode) {
                 );
             })
             .slice(0, config.MAX_SIZE);
-
     }
 
     if (availabeAppointments.length > 0) {

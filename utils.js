@@ -3,6 +3,7 @@ const axios = require("axios");
 const config = require("./config");
 const fs = require("fs");
 const ZIPCODES = JSON.parse(fs.readFileSync(config.ZIPCODES_PATH));
+const { decrypt } = require('./crypto');
 
 function getDistanceFromLatLonInMi(lat1, lon1, lat2, lon2) {
     var R = 6371; // Radius of the earth in km
@@ -46,6 +47,12 @@ function getUserId(ctx) {
 
 function getSubscriber(db, userId) {
     return db.get("subscribers").find({ id: userId }).value();
+}
+
+function formatUserConfig(user) {
+    const zipCode = decrypt(subscriber.zipCode);
+    const range = decrypt(subscriber.range);
+    return `Zipcode: ${zipCode}\nRange: ${range}`
 }
 
 async function fetchAppointments() {

@@ -16,7 +16,6 @@ const {
     filterAppointments,
     ZIPCODES
     } = require('./utils');
-const { BOT_KEY } = require("./config");
 
 db.defaults({ subscribers: [] }).write();
 const bot = new Telegraf(config.BOT_KEY);
@@ -27,13 +26,15 @@ async function subscribeToUpdates(ctx) {
 
     if (subscriber) {
         if (subscriber.active) {
-            ctx.replyWithMarkdown("Already subscribed.");
+            const zipCode = decrypt(subscriber.zipCode);
+            const range = decrypt(subscriber.range);
+            ctx.replyWithMarkdown(`Already subscribed.\n${formatUserConfig(subscriber)}`);
         } else {
             db.get("subscribers")
                 .find({ id: userId })
                 .assign({ active: true })
                 .write();
-            ctx.replyWithMarkdown("Subscribe successfully.");
+            ctx.replyWithMarkdown(`Subscribe successfully.\n${formatUserConfig(subscriber)}`);
         }
     } else {
         db.get("subscribers")
@@ -44,7 +45,7 @@ async function subscribeToUpdates(ctx) {
                 active: true,
             })
             .write();
-        ctx.replyWithMarkdown("Subscribe successfully.");
+        ctx.replyWithMarkdown(`Subscribe successfully.\n${formatUserConfig(subscriber)}`);
     }
 }
 
@@ -67,7 +68,8 @@ async function setRange(ctx) {
     const userId = getUserId(ctx);
     const subscriber = getSubscriber(db, userId);
     const inputRange = parseInt(ctx.message.text.split(" ")[1]);
-    const range = inputRange ? inputRange : config.DEFAULT_RANGE_MI;
+    const isInputRangeValid = inputRange && inputRange > 0 && inputRange < 9999;
+    const range = isInputRangeValid ? inputRange : config.DEFAULT_RANGE_MI;
 
     if (subscriber) {
         db.get("subscribers")
@@ -180,7 +182,7 @@ if (config.ENV === "prod") {
         res.send('Hello World!');
     });
     expressApp.listen(config.WEBHOOK_PORT, () => {
-    console.log(`Server running on port ${config.WEBHOOK_PORT}`);
+        console.log(`Server running on port ${config.WEBHOOK_PORT}`);
     });
     cron.schedule(config.FETCH_FREQUENCY, broadcastUpdate);
 } else {

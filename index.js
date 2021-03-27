@@ -167,6 +167,13 @@ async function sendHelp(ctx) {
     sendUpdate(userId, helpText);
 }
 
+async function getStats(ctx) {
+    const userId = getUserId(ctx);
+    const subscribers = db.get("subscribers").value();
+    const countText = `${subscribers.length} users are using me to find their vaccine appointments!`;
+    sendUpdate(userId, countText);
+}
+
 bot.start(subscribeToUpdates);
 bot.command("subscribe", subscribeToUpdates);
 bot.command("unsubscribe", unsubscribeUpdates);
@@ -174,6 +181,7 @@ bot.command("range", setRange);
 bot.command("zipcode", setZipcode);
 bot.command("now", updateNow);
 bot.command("help", sendHelp);
+bot.command("stats", getStats);
 
 if (config.ENV === "prod") {
     bot.telegram.setWebhook(config.WEBHOOK_URL);

@@ -26,8 +26,6 @@ async function subscribeToUpdates(ctx) {
 
     if (subscriber) {
         if (subscriber.active) {
-            const zipCode = decrypt(subscriber.zipCode);
-            const range = decrypt(subscriber.range);
             ctx.replyWithMarkdown(`Already subscribed.\n${formatUserConfig(subscriber)}`);
         } else {
             db.get("subscribers")
@@ -45,6 +43,7 @@ async function subscribeToUpdates(ctx) {
                 active: true,
             })
             .write();
+        const subscriber = getSubscriber(db, userId);
         ctx.replyWithMarkdown(`Subscribe successfully.\n${formatUserConfig(subscriber)}`);
     }
 }

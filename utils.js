@@ -50,8 +50,8 @@ function getSubscriber(db, userId) {
 }
 
 function formatUserConfig(user) {
-    const zipCode = decrypt(subscriber.zipCode);
-    const range = decrypt(subscriber.range);
+    const zipCode = decrypt(user.zipCode);
+    const range = decrypt(user.range);
     return `Zipcode: ${zipCode}\nRange: ${range}`
 }
 

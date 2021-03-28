@@ -185,6 +185,7 @@ async function getStats(ctx) {
 
 async function deleteMe(ctx) {
     trackHandledEvent(ctx, 'user-delete');
+    const userId = getUserId(ctx);
     await db.deleteUser(userId);
     const deleteText = `Your data has been deleted.`;
     ctx.replyWithMarkdown(deleteText);

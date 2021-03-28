@@ -3,7 +3,7 @@ const config = require("./config");
 const cron = require("node-cron");
 const express = require('express');
 const expressApp = express();
-
+const TelegrafChatbase = require('telegraf-chatbase');
 const {decrypt } = require('./crypto');
 const {
     getUserId,
@@ -14,7 +14,7 @@ const {
     } = require('./utils');
 const db = require("./db");
 
-const chatbase = new TelegrafChatbase({
+const chatbase = new TelegrafChatbase.default({
     token: config.CHATBASE_TOKEN,
 })
 const bot = new Telegraf(config.BOT_KEY);

@@ -76,13 +76,13 @@ async function setRange(ctx) {
 async function setZipcode(ctx) {
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
-    const zipcode = escape(ctx.message.text.split(" ")[1]);
-
-    if (!zipcode) {
+    const inputZipcode = ctx.message.text.split(" ")[1];
+    
+    if (!inputZipcode) {
         ctx.replyWithMarkdown(`No zipcode provided. To set your preferred zipcode, please include the zipcode after the command. e.g. \`/zipcode 94124\``);
         return;
     }
-
+    const zipcode = escape(inputZipcode);
     const isZipcodeValid = zipcode in ZIPCODES;
     if (!isZipcodeValid) {
         ctx.replyWithMarkdown(`Invalid zipcode: ${zipcode}.`);

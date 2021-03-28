@@ -191,7 +191,7 @@ async function deleteMe(ctx) {
     trackHandledEvent(ctx, 'user-delete-success');
 }
 
-async function unknownCommand(ctx) {
+async function handleUnknownMessage(ctx) {
     ctx.replyWithMarkdown(`Sorry I don't understand. Try /help.`);
     trackUnhandledEvent(ctx, 'unknown-message');
 }
@@ -210,7 +210,7 @@ bot.command("help", async (ctx) => {
 bot.command("stats", getStats);
 bot.command("deleteme", deleteMe);
 
-bot.on('message', unknownCommand);
+bot.on('message', handleUnknownMessage);
 
 if (config.ENV === "prod") {
     bot.telegram.setWebhook(config.WEBHOOK_URL);

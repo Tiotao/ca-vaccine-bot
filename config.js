@@ -4,7 +4,6 @@ const config = {
     DEFAULT_RANGE_MI: 50,
     DEFAULT_ZIPCODE: "94124",
     ZIPCODES_PATH: "postal_codes.json",
-    DB_PATH: process.env.CA_VACCINE_BOT_DB_PATH || "MY DB PATH",
     DB_HOST: process.env.CA_VACCINE_BOT_DB_HOST || 'localhost',
     DB_PORT: process.env.CA_VACCINE_BOT_DB_PORT || 5432,
     DB_NAME: process.env.CA_VACCINE_BOT_DB_NAME || "MY DB NAME",

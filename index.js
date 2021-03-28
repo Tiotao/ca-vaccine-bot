@@ -11,7 +11,8 @@ const {
     filterAppointments,
     formatUserConfig,
     ZIPCODES,
-    trackHandledEvent
+    trackHandledEvent,
+    trackUnhandledEvent,
     } = require('./utils');
 const db = require("./db");
 
@@ -190,6 +191,11 @@ async function deleteMe(ctx) {
     trackHandledEvent(ctx, 'user-delete-success');
 }
 
+async function unknownCommand(ctx) {
+    ctx.replyWithMarkdown(`Sorry I don't understand. Try /help.`);
+    trackUnhandledEvent(ctx, 'unknown-message');
+}
+
 bot.start(async (ctx) => {
     await sendHelp(ctx, /* onStart= */true);
 });
@@ -203,6 +209,8 @@ bot.command("help", async (ctx) => {
 });
 bot.command("stats", getStats);
 bot.command("deleteme", deleteMe);
+
+bot.on('text', unknownCommand);
 
 if (config.ENV === "prod") {
     bot.telegram.setWebhook(config.WEBHOOK_URL);

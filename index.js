@@ -144,8 +144,15 @@ async function sendHelp(ctx) {
 
 async function getStats(ctx) {
     const userId = getUserId(ctx);
-    const count = db.getStats();
+    const count = await db.getStats();
     const countText = `${count} users are using me to find their vaccine appointments!`;
+    sendUpdate(userId, countText);
+}
+
+async function deleteMe(ctx) {
+    const userId = getUserId(ctx);
+    await db.deleteUser(userId);
+    const countText = `Your data has been deleted.`;
     sendUpdate(userId, countText);
 }
 
@@ -157,6 +164,7 @@ bot.command("zipcode", setZipcode);
 bot.command("now", updateNow);
 bot.command("help", sendHelp);
 bot.command("stats", getStats);
+bot.command("deleteme", deleteMe);
 
 if (config.ENV === "prod") {
     bot.telegram.setWebhook(config.WEBHOOK_URL);

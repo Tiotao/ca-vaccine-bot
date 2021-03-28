@@ -22,7 +22,7 @@ const bot = new Telegraf(config.BOT_KEY);
 bot.use(chatbase.middleware())
 
 async function subscribeToUpdates(ctx) {
-    trackHandledEvent(ctx, 'user_subscribe_attempt');
+    trackHandledEvent(ctx, 'user-subscribe');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
 
@@ -31,7 +31,7 @@ async function subscribeToUpdates(ctx) {
             ctx.replyWithMarkdown(`Already subscribed.\n${formatUserConfig(user)}`);
         } else {
             await db.setSubscription(userId, /* active= */true);
-            trackHandledEvent(ctx, 'user_resubscribe');
+            trackHandledEvent(ctx, 'user-subscribe-success-resubscribe');
             ctx.replyWithMarkdown(`Subscribe successfully.\n${formatUserConfig(user)}`);
         }
     } else {
@@ -42,18 +42,18 @@ async function subscribeToUpdates(ctx) {
             /* active= */ true);
         const subscriber = await db.getUser(userId);
         ctx.replyWithMarkdown(`Subscribe successfully.\n${formatUserConfig(subscriber)}`);
-        trackHandledEvent(ctx, 'user_new');
-        trackHandledEvent(ctx, 'user_new_subscribe');
+        trackHandledEvent(ctx, 'user-new');
+        trackHandledEvent(ctx, 'user-subscribe-success-new');
     }
 }
 
 async function unsubscribeUpdates(ctx) {
-    trackHandledEvent(ctx, 'user_unsubscribe_attempt');
+    trackHandledEvent(ctx, 'user-unsubscribe');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
     if (user && user.active) {
         await db.setSubscription(userId, /* active= */false);
-        trackHandledEvent(ctx, 'user_unsubscribe');
+        trackHandledEvent(ctx, 'user-unsubscribe-success');
         ctx.replyWithMarkdown("Unsubscribed.");
     } else {
         ctx.replyWithMarkdown("You never subscribe.");
@@ -62,20 +62,20 @@ async function unsubscribeUpdates(ctx) {
 }
 
 async function setRange(ctx) {
-    trackHandledEvent(ctx, 'range_update_attempt');
+    trackHandledEvent(ctx, 'update-range');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
     const inputRange = parseInt(escape(ctx.message.text.split(" ")[1]));
     
     if (!inputRange) {
-        trackHandledEvent(ctx, 'range_update_invalid_range');
+        trackHandledEvent(ctx, 'update-range-invalid-range');
         ctx.replyWithMarkdown(`No range specified. Please enter range between 0 and 1999 miles. e.g. \`/range 120\``);
         return;
     }
 
     const isInputRangeValid = inputRange > 0 && inputRange < 1999;
     if (!isInputRangeValid) {
-        trackHandledEvent(ctx, 'range_update_invalid_range');
+        trackHandledEvent(ctx, 'update-range-invalid-range');
         ctx.replyWithMarkdown(`You entered an invalid range. Please enter range between 0 and 1999 miles. e.g. \`/range 120\``);
         return;
     }
@@ -86,28 +86,28 @@ async function setRange(ctx) {
         await db.setRange(userId, range);
     } else {
         await db.addSubscriber(userId, range);
-        trackHandledEvent(ctx, 'user_new');
+        trackHandledEvent(ctx, 'user-new');
     }
 
     ctx.replyWithMarkdown(`Range set to ${range} Mi`);
-    trackHandledEvent(ctx, 'range_update');
+    trackHandledEvent(ctx, 'update-range-success');
 }
 
 async function setZipcode(ctx) {
-    trackHandledEvent(ctx, 'zipcode_update_attempt');
+    trackHandledEvent(ctx, 'zipcode-update');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
     const inputZipcode = ctx.message.text.split(" ")[1];
     
     if (!inputZipcode) {
-        trackHandledEvent(ctx, 'zipcode_update_invalid');
+        trackHandledEvent(ctx, 'zipcode-update-invalid');
         ctx.replyWithMarkdown(`No zipcode provided. To set your preferred zipcode, please include the zipcode after the command. e.g. \`/zipcode 94124\``);
         return;
     }
     const zipcode = escape(inputZipcode);
     const isZipcodeValid = zipcode in ZIPCODES;
     if (!isZipcodeValid) {
-        trackHandledEvent(ctx, 'zipcode_update_invalid');
+        trackHandledEvent(ctx, 'zipcode-update-invalid');
         ctx.replyWithMarkdown(`Invalid zipcode: ${zipcode}.`);
         return;
     }
@@ -116,15 +116,15 @@ async function setZipcode(ctx) {
         await db.setZipcode(userId, zipcode);
     } else {
         await db.addSubscriber(userId, config.DEFAULT_RANGE_MI, zipcode, /* active= */false);
-        trackHandledEvent(ctx, 'user_new');
+        trackHandledEvent(ctx, 'user-new');
     }
     
     ctx.replyWithMarkdown(`Zipcode set to ${zipcode}`);
-    trackHandledEvent(ctx, 'zipcode_update');
+    trackHandledEvent(ctx, 'zipcode-update-success');
 }
 
 async function updateNow(ctx) {
-    trackHandledEvent(ctx, 'fetch_update_now_attempt');
+    trackHandledEvent(ctx, 'fetch-update-now');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
     const appointments = await fetchAppointments();
@@ -135,7 +135,7 @@ async function updateNow(ctx) {
     );
     
     ctx.replyWithMarkdown(results);
-    trackHandledEvent(ctx, 'fetch_update_now');
+    trackHandledEvent(ctx, 'fetch-update-now-success');
 }
 
 function sendUpdate(userId, results) {
@@ -167,27 +167,27 @@ async function broadcastUpdate() {
 }
 
 async function sendHelp(ctx, onStart) {
-    trackHandledEvent(ctx, onStart? 'onboarding_attempt' : 'get_help_attempt');
+    trackHandledEvent(ctx, onStart? 'onboarding' : 'get-help');
     const helpText = `\u{2764} I can help you find vaccine appointments near you.\n\nYou can control me by sending these commands:\n\n/subscribe - subscribe to hourly updates based on your zipcode and search range.\n/unsubscribe - unsubscribe hourly updates.\n/range - set the search reange. (e.g.  \`/range 200\` sets the max search range to 200 miles.)\n/zipcode - set where you want to find vaccine appoinments (e.g. \`/zipcode 94124\` makes me search available appointments near 94124)\n/deleteme - remove your preference data completely.\n/help - see available commands\n\nWe are powered by VaccineSpotter API(www.vaccinespotter.org).`;
     ctx.replyWithMarkdown(helpText);
-    trackHandledEvent(ctx, onStart? 'onboarding' : 'get_help');
+    trackHandledEvent(ctx, onStart? 'onboarding-success' : 'get-help-success');
 }
 
 
 async function getStats(ctx) {
-    trackHandledEvent(ctx, 'get_stats_attempt');
+    trackHandledEvent(ctx, 'get-stats');
     const count = await db.getStats();
     const countText = `${count} users are using me to find their vaccine appointments!`;
     ctx.replyWithMarkdown(countText);
-    trackHandledEvent(ctx, 'get_stats');
+    trackHandledEvent(ctx, 'get-stats-success');
 }
 
 async function deleteMe(ctx) {
-    trackHandledEvent(ctx, 'user_delete_attempt');
+    trackHandledEvent(ctx, 'user-delete');
     await db.deleteUser(userId);
     const deleteText = `Your data has been deleted.`;
     ctx.replyWithMarkdown(deleteText);
-    trackHandledEvent(ctx, 'user_delete');
+    trackHandledEvent(ctx, 'user-delete-success');
 }
 
 bot.start(async (ctx) => {

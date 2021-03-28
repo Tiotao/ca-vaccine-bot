@@ -116,11 +116,29 @@ function filterAppointments(appointments, range, zipcode) {
     }
 }
 
+function trackHandledEvent(ctx, intent) {
+    ctx.chatbase.track({
+        intent: intent,
+        isFeedback: false, 
+        isHandled: true, 
+    })
+}
+
+function trackUnhandledEvent(ctx, intent) {
+    ctx.chatbase.track({
+        intent: intent,
+        isFeedback: false, 
+        isHandled: false, 
+    })
+}
+
 module.exports = {
     getDistance,
     getUserId,
     fetchAppointments,
     filterAppointments,
     formatUserConfig,
+    trackUnhandledEvent,
+    trackHandledEvent,
     ZIPCODES
 };

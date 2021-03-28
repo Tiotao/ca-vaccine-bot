@@ -127,6 +127,8 @@ async function broadcastUpdate() {
     console.info(`user total: ${subscribers.length}`);
     for (let i = 0; i < subscribers.length; i++) {
         const subscriber = subscribers[i];
+        // Avoid hitting QPS limit for Telegram bot. (30 messages per second)
+        await new Promise(resolve => setTimeout(resolve, 100));
         const results = filterAppointments(
             appointments,
             parseInt(decrypt(subscriber.range)),

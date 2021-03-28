@@ -112,7 +112,7 @@ async function setRange(userId, range) {
 
 async function getStats() {
     try {
-        const query = `SELECT COUNT(*) FROM subscribers`;
+        const query = `SELECT COUNT(*) FROM subscribers WHERE active = true`;
         const res = await client.query(query);
         return res.rows[0].count || 0;
     } catch (err) {

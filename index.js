@@ -210,7 +210,7 @@ bot.command("help", async (ctx) => {
 bot.command("stats", getStats);
 bot.command("deleteme", deleteMe);
 
-bot.on('text', unknownCommand);
+bot.on('message', unknownCommand);
 
 if (config.ENV === "prod") {
     bot.telegram.setWebhook(config.WEBHOOK_URL);

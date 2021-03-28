@@ -14,7 +14,11 @@ const {
     } = require('./utils');
 const db = require("./db");
 
+const chatbase = new TelegrafChatbase({
+    token: config.CHATBASE_TOKEN,
+})
 const bot = new Telegraf(config.BOT_KEY);
+bot.use(chatbase.middleware())
 
 async function subscribeToUpdates(ctx) {
     const userId = getUserId(ctx);
@@ -138,33 +142,50 @@ async function broadcastUpdate() {
     }
 }
 
-async function sendHelp(ctx) {
+async function sendHelp(ctx, onStart) {
     const helpText = `\u{2764} I can help you find vaccine appointments near you.\n\nYou can control me by sending these commands:\n\n/subscribe - subscribe to hourly updates based on your zipcode and search range.\n/unsubscribe - unsubscribe hourly updates.\n/range - set the search reange. (e.g.  \`/range 200\` sets the max search range to 200 miles.)\n/zipcode - set where you want to find vaccine appoinments (e.g. \`/zipcode 94124\` makes me search available appointments near 94124)\n/deleteme - remove your preference data completely.\n/help - see available commands\n\nWe are powered by VaccineSpotter API(www.vaccinespotter.org).`;
-    const userId = getUserId(ctx);
-    sendUpdate(userId, helpText);
+    ctx.replyWithMarkdown(helpText);
+    ctx.chatbase.track({
+        intent: onStart? 'onboarding' : 'help', 
+        isFeedback: false, 
+        isHandled: true, 
+    })
 }
 
+
 async function getStats(ctx) {
-    const userId = getUserId(ctx);
     const count = await db.getStats();
     const countText = `${count} users are using me to find their vaccine appointments!`;
-    sendUpdate(userId, countText);
+    ctx.replyWithMarkdown(countText);
+    ctx.chatbase.track({
+        intent: 'get_stats',
+        isFeedback: false, 
+        isHandled: true, 
+    })
 }
 
 async function deleteMe(ctx) {
-    const userId = getUserId(ctx);
     await db.deleteUser(userId);
-    const countText = `Your data has been deleted.`;
-    sendUpdate(userId, countText);
+    const deleteText = `Your data has been deleted.`;
+    ctx.replyWithMarkdown(deleteText);
+    ctx.chatbase.track({
+        intent: 'delete_user',
+        isFeedback: false, 
+        isHandled: true,
+    })
 }
 
-bot.start(sendHelp);
+bot.start(async (ctx) => {
+    await sendHelp(ctx, /* onStart= */true);
+});
 bot.command("subscribe", subscribeToUpdates);
 bot.command("unsubscribe", unsubscribeUpdates);
 bot.command("range", setRange);
 bot.command("zipcode", setZipcode);
 bot.command("now", updateNow);
-bot.command("help", sendHelp);
+bot.command("help", async (ctx) => {
+    await sendHelp(ctx);
+});
 bot.command("stats", getStats);
 bot.command("deleteme", deleteMe);
 

@@ -29,7 +29,7 @@ async function subscribeToUpdates(ctx) {
         }
     } else {
         await db.addSubscriber(userId);
-        const subscriber = await db.getUser(userId);
+        const subscriber = await db.getUser(userId,/* active= */true);
         ctx.replyWithMarkdown(`Subscribe successfully.\n${formatUserConfig(subscriber)}`);
     }
 }
@@ -127,6 +127,8 @@ async function broadcastUpdate() {
     console.info(`user total: ${subscribers.length}`);
     for (let i = 0; i < subscribers.length; i++) {
         const subscriber = subscribers[i];
+        // Avoid hitting QPS limit for Telegram bot. (30 messages per second)
+        await new Promise(resolve => setTimeout(resolve, 100));
         const results = filterAppointments(
             appointments,
             parseInt(decrypt(subscriber.range)),
@@ -156,7 +158,7 @@ async function deleteMe(ctx) {
     sendUpdate(userId, countText);
 }
 
-bot.start(subscribeToUpdates);
+bot.start(sendHelp);
 bot.command("subscribe", subscribeToUpdates);
 bot.command("unsubscribe", unsubscribeUpdates);
 bot.command("range", setRange);

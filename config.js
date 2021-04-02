@@ -11,7 +11,7 @@ const config = {
     DB_PASSWORD: process.env.CA_VACCINE_BOT_DB_PASSWORD || "MY DB PASSWORD",
     BOT_KEY: process.env.CA_VACCINE_BOT_KEY || "MY BOT KEY",
     AES_KEY: process.env.CA_VACCINE_BOT_AES_KEY || "MY AES KEY",
-    WEBHOOK_URL: process.env.BASE_URL + "webhook",
+    WEBHOOK_URL: process.env.BASE_URL + process.env.CA_VACCINE_BOT_KEY + "_webhook",
     WEBHOOK_PORT: process.env.PORT || 3000,
     FETCH_FREQUENCY: process.env.CA_VACCINE_BOT_FETCH_FREQUENCY || "*/60 * * * *",
     CHATBASE_TOKEN: process.env.CA_VACCINE_BOT_CHATBASE_TOKEN,

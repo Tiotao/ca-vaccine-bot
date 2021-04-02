@@ -222,7 +222,7 @@ bot.on('message', handleUnknownMessage);
 
 if (config.ENV === "prod") {
     bot.telegram.setWebhook(config.WEBHOOK_URL);
-    expressApp.use(bot.webhookCallback(`/webhook`));
+    expressApp.use(bot.webhookCallback(`/${config.BOT_KEY}_webhook`));
     expressApp.get('/', (req, res) => {
         res.send('Hello World!');
     });

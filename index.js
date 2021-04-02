@@ -10,7 +10,6 @@ const {
     fetchAppointments,
     filterAppointments,
     formatUserConfig,
-    ZIPCODES,
     trackHandledEvent,
     trackUnhandledEvent,
     fetchStateAppointments,

@@ -1,9 +1,6 @@
-
 const axios = require("axios");
 const config = require("./config");
-const fs = require("fs");
 const zipcodes = require('zipcodes');
-const ZIPCODES = JSON.parse(fs.readFileSync(config.ZIPCODES_PATH));
 
 function getDistanceFromLatLonInMi(lat1, lon1, lat2, lon2) {
     var R = 6371; // Radius of the earth in km
@@ -176,5 +173,4 @@ module.exports = {
     trackUnhandledEvent,
     trackHandledEvent,
     fetchStateAppointments,
-    ZIPCODES
 };

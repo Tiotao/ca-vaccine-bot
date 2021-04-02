@@ -14,11 +14,11 @@ const config = {
     WEBHOOK_URL: process.env.BASE_URL + process.env.CA_VACCINE_BOT_KEY + "_webhook",
     WEBHOOK_PORT: process.env.PORT || 3000,
     FETCH_FREQUENCY: process.env.CA_VACCINE_BOT_FETCH_FREQUENCY || "*/60 * * * *",
-    CHATBASE_TOKEN: process.env.CA_VACCINE_BOT_CHATBASE_TOKEN,
-    FETCH_FREQUENCY_DEBUG: "*/1 * * * *",
+    FETCH_FREQUENCY_DEBUG: "*/10 * * * *",
     VACCINE_API_URL: "https://www.vaccinespotter.org/api/v0/states/",
     VALID_STATES: ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "PR", "RI", "SC", "SD", "TN", "TX", "VI", "UT", "VT", "VA", "WA", "WV", "WI", "WY"],
+    CHATBASE_TOKEN: process.env.CA_VACCINE_BOT_CHATBASE_TOKEN,
 };
 
-console.log(config);
+console.info(config);
 module.exports = config;

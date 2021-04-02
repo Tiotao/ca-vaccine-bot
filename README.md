@@ -3,6 +3,4 @@
 ## Setup
 * Install Node
 * Install PostgreSQL and create an empty table `subscribers`
-
-## Usage
-To start the bot with command `npm start`
+* Start the bot with command `npm start`

@@ -4,7 +4,7 @@ const cron = require("node-cron");
 const express = require('express');
 const expressApp = express();
 const TelegrafChatbase = require('telegraf-chatbase');
-const {decrypt } = require('./crypto');
+const { decrypt } = require('./crypto');
 const {
     getUserId,
     fetchAppointments,
@@ -13,8 +13,10 @@ const {
     ZIPCODES,
     trackHandledEvent,
     trackUnhandledEvent,
-    } = require('./utils');
+    fetchStateAppointments,
+} = require('./utils');
 const db = require("./db");
+const zipcodes = require('zipcodes');
 
 const chatbase = new TelegrafChatbase.default({
     token: config.CHATBASE_TOKEN,
@@ -23,33 +25,30 @@ const bot = new Telegraf(config.BOT_KEY);
 bot.use(chatbase.middleware())
 
 async function subscribeToUpdates(ctx) {
-    trackHandledEvent(ctx, 'user-subscribe');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
 
     if (user) {
         if (user.active) {
-            ctx.replyWithMarkdown(`Already subscribed.\n${formatUserConfig(user)}`);
+            ctx.replyWithMarkdown(`Haiyaa, you subscribed already.\n${formatUserConfig(user)}`);
         } else {
             await db.setSubscription(userId, /* active= */true);
             trackHandledEvent(ctx, 'user-subscribe-success-resubscribe');
-            ctx.replyWithMarkdown(`Subscribe successfully.\n${formatUserConfig(user)}`);
+            ctx.replyWithMarkdown(`Subscribed successfully.\n${formatUserConfig(user)}`);
         }
     } else {
         await db.addSubscriber(
-            userId, 
-            config.DEFAULT_RANGE_MI, 
-            config.DEFAULT_ZIPCODE, 
+            userId,
+            config.DEFAULT_RANGE_MI,
+            config.DEFAULT_ZIPCODE,
             /* active= */ true);
         const subscriber = await db.getUser(userId);
-        ctx.replyWithMarkdown(`Subscribe successfully.\n${formatUserConfig(subscriber)}`);
-        trackHandledEvent(ctx, 'user-new');
+        ctx.replyWithMarkdown(`Subscribed successfully.\n${formatUserConfig(subscriber)}`);
         trackHandledEvent(ctx, 'user-subscribe-success-new');
     }
 }
 
 async function unsubscribeUpdates(ctx) {
-    trackHandledEvent(ctx, 'user-unsubscribe');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
     if (user && user.active) {
@@ -59,15 +58,14 @@ async function unsubscribeUpdates(ctx) {
     } else {
         ctx.replyWithMarkdown("You never subscribe.");
     }
-    
+
 }
 
 async function setRange(ctx) {
-    trackHandledEvent(ctx, 'update-range');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
     const inputRange = parseInt(escape(ctx.message.text.split(" ")[1]));
-    
+
     if (!inputRange) {
         trackHandledEvent(ctx, 'update-range-invalid-range');
         ctx.replyWithMarkdown(`No range specified. Please enter range between 0 and 1999 miles. e.g. \`/range 120\``);
@@ -87,29 +85,28 @@ async function setRange(ctx) {
         await db.setRange(userId, range);
     } else {
         await db.addSubscriber(userId, range);
-        trackHandledEvent(ctx, 'user-new');
     }
 
-    ctx.replyWithMarkdown(`Range set to ${range} Mi`);
+    ctx.replyWithMarkdown(`Range set to ${range} mi`);
     trackHandledEvent(ctx, 'update-range-success');
 }
 
 async function setZipcode(ctx) {
-    trackHandledEvent(ctx, 'zipcode-update');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
     const inputZipcode = ctx.message.text.split(" ")[1];
-    
+
     if (!inputZipcode) {
         trackHandledEvent(ctx, 'zipcode-update-invalid');
         ctx.replyWithMarkdown(`No zipcode provided. To set your preferred zipcode, please include the zipcode after the command. e.g. \`/zipcode 94124\``);
         return;
     }
     const zipcode = escape(inputZipcode);
-    const isZipcodeValid = zipcode in ZIPCODES;
+    const zipcodeInfo = zipcodes.lookup(zipcode);
+    const isZipcodeValid = zipcodes.lookup(zipcode) && config.VALID_STATES.includes(zipcodeInfo.state);
     if (!isZipcodeValid) {
         trackHandledEvent(ctx, 'zipcode-update-invalid');
-        ctx.replyWithMarkdown(`Invalid zipcode: ${zipcode}.`);
+        ctx.replyWithMarkdown(`Invalid zipcode or your zipcode is not currently supported: ${zipcode}.`);
         return;
     }
 
@@ -117,9 +114,8 @@ async function setZipcode(ctx) {
         await db.setZipcode(userId, zipcode);
     } else {
         await db.addSubscriber(userId, config.DEFAULT_RANGE_MI, zipcode, /* active= */false);
-        trackHandledEvent(ctx, 'user-new');
     }
-    
+
     ctx.replyWithMarkdown(`Zipcode set to ${zipcode}`);
     trackHandledEvent(ctx, 'zipcode-update-success');
 }
@@ -128,15 +124,15 @@ async function updateNow(ctx) {
     trackHandledEvent(ctx, 'fetch-update-now');
     const userId = getUserId(ctx);
     const user = await db.getUser(userId);
-    const appointments = await fetchAppointments();
+    const zipcodeInfo = zipcodes.lookup(user.zipcode);
+    const appointments = await fetchStateAppointments(zipcodeInfo.state);
     const results = filterAppointments(
         appointments,
         user ? parseInt(user.range) : config.DEFAULT_RANGE_MI,
         user ? user.zipcode : config.DEFAULT_ZIPCODE
     );
-    
+
     ctx.replyWithMarkdown(results);
-    trackHandledEvent(ctx, 'fetch-update-now-success');
 }
 
 function sendUpdate(userId, results) {
@@ -150,37 +146,40 @@ function sendUpdate(userId, results) {
 }
 
 async function broadcastUpdate() {
+    console.info(`start broadcasting`);
     const subscribers = await db.getAllSubscribers();
     const appointments = await fetchAppointments();
-    console.info(`fetched total: ${appointments.length}`);
     console.info(`user total: ${subscribers.length}`);
     for (let i = 0; i < subscribers.length; i++) {
         const subscriber = subscribers[i];
-        // Avoid hitting QPS limit for Telegram bot. (30 messages per second)
-        await new Promise(resolve => setTimeout(resolve, 100));
-        const results = filterAppointments(
-            appointments,
-            parseInt(decrypt(subscriber.range)),
-            decrypt(subscriber.zipcode)
-        );
-        sendUpdate(subscriber.id, results);
+        const range = parseInt(decrypt(subscriber.range));
+        const zipcode = decrypt(subscriber.zipcode);
+        const zipcodeInfo = zipcodes.lookup(zipcode);
+        if (zipcodeInfo) {
+            // Avoid hitting QPS limit for Telegram bot. (30 messages per second)
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const results = filterAppointments(
+                appointments[zipcodeInfo.state],
+                range,
+                zipcode,
+            );
+            sendUpdate(subscriber.id, results);
+        }
     }
 }
 
 async function sendHelp(ctx, onStart) {
-    trackHandledEvent(ctx, onStart? 'onboarding' : 'get-help');
     const helpText = `\u{2764} I can help you find vaccine appointments near you.\n\nYou can control me by sending these commands:\n\n/subscribe - subscribe to hourly updates based on your zipcode and search range.\n/unsubscribe - unsubscribe hourly updates.\n/range - set the search reange. (e.g.  \`/range 200\` sets the max search range to 200 miles.)\n/zipcode - set where you want to find vaccine appoinments (e.g. \`/zipcode 94124\` makes me search available appointments near 94124)\n/deleteme - remove your preference data completely.\n/help - see available commands\n\nWe are powered by VaccineSpotter API(www.vaccinespotter.org).`;
     ctx.replyWithMarkdown(helpText);
-    trackHandledEvent(ctx, onStart? 'onboarding-success' : 'get-help-success');
+    trackHandledEvent(ctx, onStart ? 'onboarding' : 'get-help');
 }
 
 
 async function getStats(ctx) {
-    trackHandledEvent(ctx, 'get-stats');
     const count = await db.getStats();
     const countText = `${count} users are using me to find their vaccine appointments!`;
     ctx.replyWithMarkdown(countText);
-    trackHandledEvent(ctx, 'get-stats-success');
+    trackHandledEvent(ctx, 'get-stats');
 }
 
 async function deleteMe(ctx) {
@@ -189,7 +188,7 @@ async function deleteMe(ctx) {
     await db.deleteUser(userId);
     const deleteText = `Your data has been deleted.`;
     ctx.replyWithMarkdown(deleteText);
-    trackHandledEvent(ctx, 'user-delete-success');
+    trackHandledEvent(ctx, 'user-delete');
 }
 
 async function handleUnknownMessage(ctx) {
@@ -225,6 +224,7 @@ if (config.ENV === "prod") {
     cron.schedule(config.FETCH_FREQUENCY, broadcastUpdate);
 } else {
     bot.launch();
+    broadcastUpdate();
     cron.schedule(config.FETCH_FREQUENCY_DEBUG, broadcastUpdate);
 }
 

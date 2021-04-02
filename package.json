@@ -10,7 +10,8 @@
     "node-cron": "^3.0.0",
     "pg": "^8.5.1",
     "telegraf": "^4.3.0",
-    "telegraf-chatbase": "^1.0.2"
+    "telegraf-chatbase": "^1.0.2",
+    "zipcodes": "^8.0.0"
   },
   "devDependencies": {},
   "scripts": {

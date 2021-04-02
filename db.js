@@ -51,7 +51,7 @@ async function getAllSubscribers() {
         FROM subscribers WHERE active = true`;
         const res = await client.query(query);
         if (!res.rowCount) {
-            return null
+            return []
         } else {
             return res.rows;
         }

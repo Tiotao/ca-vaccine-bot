@@ -2,6 +2,7 @@
 const axios = require("axios");
 const config = require("./config");
 const fs = require("fs");
+const zipcodes = require('zipcodes');
 const ZIPCODES = JSON.parse(fs.readFileSync(config.ZIPCODES_PATH));
 
 function getDistanceFromLatLonInMi(lat1, lon1, lat2, lon2) {
@@ -11,9 +12,9 @@ function getDistanceFromLatLonInMi(lat1, lon1, lat2, lon2) {
     var a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos(deg2rad(lat1)) *
-            Math.cos(deg2rad(lat2)) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
+        Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     var d = R * c * 0.621371192; // Distance in mile
     return d;
@@ -24,12 +25,12 @@ function deg2rad(deg) {
 }
 
 function getDistance(coordinates, zipcode) {
-    const baseCoordinates = ZIPCODES[zipcode];
+    const zipcodeInfo = zipcodes.lookup(zipcode);
     return getDistanceFromLatLonInMi(
         coordinates[1],
         coordinates[0],
-        baseCoordinates[1],
-        baseCoordinates[0]
+        zipcodeInfo.latitude,
+        zipcodeInfo.longitude,
     );
 }
 
@@ -45,20 +46,47 @@ function getUserId(ctx) {
 }
 
 function formatUserConfig(user) {
-    const {zipcode, range} = user;
+    const { zipcode, range } = user;
     return `----------\n*Search Preference:*\nZipcode: ${zipcode}\nRange: ${range} mi`;
 }
 
 async function fetchAppointments() {
+    let promises = [];
+    let appointments = {};
+    for (let i = 0; i < config.VALID_STATES.length; i++) {
+        const state = config.VALID_STATES[i];
+        promises.push(
+            fetchStateAppointments(state)
+                .then(stateAppointments => {
+                    appointments[state] = stateAppointments;
+                }).catch((error) => {
+                    throw error;
+                })
+        );
+    }
+    await Promise.all(promises);
+    if (config.ENV === 'debug') {
+        const fetchedStates = Object.keys(appointments);
+        const fetchedAppointmentsCount = {}
+        for (let i = 0; i < fetchedStates.length; i++) {
+            const state = fetchedStates[i]
+            fetchedAppointmentsCount[state] = appointments[state] ? appointments[state].length : 0;
+        }
+        console.info("Fetched: ", fetchedAppointmentsCount);
+    }
+    return appointments;
+}
+
+async function fetchStateAppointments(state) {
     try {
         const {
             data: { features },
         } = await axios
-            .get(config.VACCINE_API_URL)
+            .get(`${config.VACCINE_API_URL}${state}.json`)
             .catch((error) => console.log(error));
         return features;
     } catch (error) {
-        throw error;
+        return [];
     }
 }
 
@@ -73,10 +101,9 @@ function formatAppointment(index, appointment, zipcode) {
     const distance = parseInt(
         getDistance(appointment.geometry.coordinates, zipcode)
     );
-    const link = `[Check](${url})`;
-    return `*${index + 1}. ${provider_brand_name} - ${city} (${
-        distance ? distance : "unknown"
-    } mi)* ${link}\n${address}, ${city}, ${postal_code}\n`
+    const link = `[Book](${url})`;
+    return `*${index + 1}. ${provider_brand_name} - ${city} (${distance ? distance : "unknown"
+        } mi)* ${link}\n${address}, ${city}, ${postal_code}\n`
 }
 
 function filterAppointments(appointments, range, zipcode) {
@@ -103,6 +130,8 @@ function filterAppointments(appointments, range, zipcode) {
             .slice(0, config.MAX_SIZE);
     }
 
+    const zipcodeInfo = zipcodes.lookup(zipcode);
+
     if (availabeAppointments.length > 0) {
         let content = "";
         for (let i = 0; i < availabeAppointments.length; i++) {
@@ -110,26 +139,32 @@ function filterAppointments(appointments, range, zipcode) {
             content += formatAppointment(i, appointment, zipcode)
         }
 
-        return `\u{1F489} ${availabeAppointments.length} appoinment(s) found within ${range} mi of ${zipcode}.\n----------\n${content}`;
+        return `\u{1F489} Fuyohh! ${availabeAppointments.length} appoinment(s) found within ${range} mi of ${zipcode} (${zipcodeInfo.city}, ${zipcodeInfo.state}).\n----------\n${content}`;
     } else {
-        return `\u{1F97A} no appointments available within ${range} mi of ${zipcode}. Keep trying! Don't forget to wear a mask and social distance!.`
+        return `\u{1F97A} Haiyaa! no appointment available within ${range} mi of ${zipcode}. Keep trying! Don't forget to wear a mask and social distance!.`
     }
 }
 
 function trackHandledEvent(ctx, intent) {
+    if (!config.CHATBASE_TOKEN) return;
     ctx.chatbase.track({
         intent: intent,
-        isFeedback: false, 
-        isHandled: true, 
-    })
+        isFeedback: false,
+        isHandled: true,
+    }).catch((e) => {
+        console.error(e);
+    });
 }
 
 function trackUnhandledEvent(ctx, intent) {
+    if (!config.CHATBASE_TOKEN) return;
     ctx.chatbase.track({
         intent: intent,
-        isFeedback: false, 
-        isHandled: false, 
-    })
+        isFeedback: false,
+        isHandled: false,
+    }).catch((e) => {
+        console.error(e);
+    });
 }
 
 module.exports = {
@@ -140,5 +175,6 @@ module.exports = {
     formatUserConfig,
     trackUnhandledEvent,
     trackHandledEvent,
+    fetchStateAppointments,
     ZIPCODES
 };

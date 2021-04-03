@@ -86,7 +86,9 @@ async function setRange(ctx) {
         await db.addSubscriber(userId, range);
     }
 
-    ctx.replyWithMarkdown(`Range set to ${range} mi`);
+    const reply = user.active ? `Range set to ${range} mi.\n----------\nUse /subscribe to receive hourly updates.` : `Range set to ${range} mi`;
+
+    ctx.replyWithMarkdown(reply);
     trackHandledEvent(ctx, 'update-range-success');
 }
 
@@ -115,7 +117,9 @@ async function setZipcode(ctx) {
         await db.addSubscriber(userId, config.DEFAULT_RANGE_MI, zipcode, /* active= */false);
     }
 
-    ctx.replyWithMarkdown(`Zipcode set to ${zipcode}`);
+    const reply = user.active ? `Zipcode set to ${zipcode}.\n----------\nUse /subscribe to receive hourly updates.` : `Zipcode set to ${zipcode}`;
+
+    ctx.replyWithMarkdown(reply);
     trackHandledEvent(ctx, 'zipcode-update-success');
 }
 
@@ -168,7 +172,7 @@ async function broadcastUpdate() {
 }
 
 async function sendHelp(ctx, onStart) {
-    const helpText = `\u{2764} I can help you find vaccine appointments near you.\n\nYou can control me by sending these commands:\n\n/subscribe - subscribe to hourly updates based on your zipcode and search range.\n/unsubscribe - unsubscribe hourly updates.\n/range - set the search reange. (e.g.  \`/range 200\` sets the max search range to 200 miles.)\n/zipcode - set where you want to find vaccine appoinments (e.g. \`/zipcode 94124\` makes me search available appointments near 94124)\n/deleteme - remove your preference data completely.\n/help - see available commands\n\nWe are powered by VaccineSpotter API(www.vaccinespotter.org).`;
+    const helpText = `\u{2764} I can help you find vaccine appointments near you.\n\nYou can control me by sending these commands:\n\n/subscribe - subscribe to hourly updates based on your zipcode and search range.\n/unsubscribe - unsubscribe hourly updates.\n/range - set the search reange. (e.g.  \`/range 200\` sets the max search range to 200 miles.)\n/zipcode - set where you want to find vaccine appoinments (e.g. \`/zipcode 94124\` makes me search available appointments near 94124)\n/deleteme - remove your preference data completely.\n/now - look for appointments now (beta).\n/help - see available commands\n\nWe are powered by VaccineSpotter API(www.vaccinespotter.org).`;
     ctx.replyWithMarkdown(helpText);
     trackHandledEvent(ctx, onStart ? 'onboarding' : 'get-help');
 }

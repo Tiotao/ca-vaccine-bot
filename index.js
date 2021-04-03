@@ -86,7 +86,7 @@ async function setRange(ctx) {
         await db.addSubscriber(userId, range);
     }
 
-    const reply = user.active ? `Range set to ${range} mi.\n----------\nUse /subscribe to receive hourly updates.` : `Range set to ${range} mi`;
+    const reply = user.active ? `Range set to ${range} mi` : `Range set to ${range} mi.\n----------\nUse /subscribe to receive hourly updates.`;
 
     ctx.replyWithMarkdown(reply);
     trackHandledEvent(ctx, 'update-range-success');
@@ -117,7 +117,7 @@ async function setZipcode(ctx) {
         await db.addSubscriber(userId, config.DEFAULT_RANGE_MI, zipcode, /* active= */false);
     }
 
-    const reply = user.active ? `Zipcode set to ${zipcode}.\n----------\nUse /subscribe to receive hourly updates.` : `Zipcode set to ${zipcode}`;
+    const reply = user.active ? `Zipcode set to ${zipcode}` : `Zipcode set to ${zipcode}.\n----------\nUse /subscribe to receive hourly updates.`
 
     ctx.replyWithMarkdown(reply);
     trackHandledEvent(ctx, 'zipcode-update-success');

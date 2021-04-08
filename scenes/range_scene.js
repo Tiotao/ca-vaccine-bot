@@ -14,7 +14,7 @@ rangeScene.enter((ctx) => {
 
 rangeScene.on('text', async (ctx) => {
     const userId = getUserId(ctx);
-    const user = await db.getUser(userId);
+    let user = await db.getUser(userId);
     const inputRange = parseInt(escape(ctx.message.text));
 
     if (!inputRange) {
@@ -38,6 +38,7 @@ rangeScene.on('text', async (ctx) => {
         await db.addSubscriber(userId, range);
     }
 
+    user = await db.getUser(userId);
     const reply = user.active ? `Range set to ${range} mi` : `Range set to ${range} mi.\n----------\nUse /subscribe to receive hourly updates.`;
 
     ctx.replyWithMarkdown(reply);

@@ -15,7 +15,7 @@ zipcodeScene.enter((ctx) => {
 
 zipcodeScene.on('text', async (ctx) => {
     const userId = getUserId(ctx);
-    const user = await db.getUser(userId);
+    let user = await db.getUser(userId);
     const inputZipcode = ctx.message.text;
 
     if (!inputZipcode) {
@@ -38,6 +38,7 @@ zipcodeScene.on('text', async (ctx) => {
         await db.addSubscriber(userId, config.DEFAULT_RANGE_MI, zipcode, /* active= */false);
     }
 
+    user = await db.getUser(userId);
     const reply = user.active ? `Zipcode set to ${zipcode}` : `Zipcode set to ${zipcode}.\n----------\nUse /subscribe to receive hourly updates.`
 
     ctx.replyWithMarkdown(reply);

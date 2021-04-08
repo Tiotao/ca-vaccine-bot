@@ -1,6 +1,8 @@
 const axios = require("axios");
 const config = require("./config");
 const zipcodes = require('zipcodes');
+const db = require('./db');
+const { decrypt } = require('./crypto');
 
 function getDistanceFromLatLonInMi(lat1, lon1, lat2, lon2) {
     var R = 6371; // Radius of the earth in km
@@ -164,6 +166,41 @@ function trackUnhandledEvent(ctx, intent) {
     });
 }
 
+
+function sendUpdate(bot, userId, results) {
+    bot.telegram
+        .sendMessage(userId, results, {
+            parse_mode: "Markdown",
+        })
+        .catch(() => {
+            db.setSubscription(userId, /* active= */false);
+        });
+}
+
+async function broadcastUpdate(bot) {
+    console.info(`start broadcasting`);
+    const subscribers = await db.getAllSubscribers();
+    const appointments = await fetchAppointments();
+    console.info(`user total: ${subscribers.length}`);
+    for (let i = 0; i < subscribers.length; i++) {
+        const subscriber = subscribers[i];
+        const range = parseInt(decrypt(subscriber.range));
+        const zipcode = decrypt(subscriber.zipcode);
+        const zipcodeInfo = zipcodes.lookup(zipcode);
+        if (zipcodeInfo) {
+            // Avoid hitting QPS limit for Telegram bot. (30 messages per second)
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const results = filterAppointments(
+                appointments[zipcodeInfo.state],
+                range,
+                zipcode,
+            );
+            sendUpdate(bot, subscriber.id, results);
+        }
+    }
+}
+
+
 module.exports = {
     getDistance,
     getUserId,
@@ -173,4 +210,5 @@ module.exports = {
     trackUnhandledEvent,
     trackHandledEvent,
     fetchStateAppointments,
+    broadcastUpdate
 };

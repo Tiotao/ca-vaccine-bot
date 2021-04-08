@@ -1,5 +1,6 @@
 const {
     trackHandledEvent,
+    getUserId,
 } = require('../utils');
 const db = require('../db');
 

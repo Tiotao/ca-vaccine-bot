@@ -10,7 +10,7 @@ const {
 const zipcodeScene = new BaseScene('ZIPCODE_SCENE_ID');
 
 zipcodeScene.enter((ctx) => {
-    ctx.reply('What\'s your preferred zipcode?');
+    ctx.reply('What\'s your preferred zipcode? e.g. 15213');
 })
 
 zipcodeScene.on('text', async (ctx) => {

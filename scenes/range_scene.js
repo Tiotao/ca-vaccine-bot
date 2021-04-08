@@ -9,7 +9,7 @@ const {
 const rangeScene = new BaseScene('RANGE_SCENE_ID');
 
 rangeScene.enter((ctx) => {
-    ctx.reply('What\'s your preferred search range?');
+    ctx.reply('What\'s your preferred search range (in miles)? e.g. 100');
 })
 
 rangeScene.on('text', async (ctx) => {

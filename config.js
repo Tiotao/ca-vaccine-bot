@@ -1,6 +1,6 @@
 const config = {
     ENV: process.env.CA_VACCINE_BOT_ENV || "debug",
-    MAX_SIZE: 30,
+    MAX_SIZE: 20,
     DEFAULT_RANGE_MI: 50,
     DEFAULT_ZIPCODE: "15213",
     BOT_KEY: process.env.CA_VACCINE_BOT_KEY || "MY BOT KEY",
